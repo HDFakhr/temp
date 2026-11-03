@@ -1,0 +1,10 @@
+#include "board_zmq_client/version.hpp"
+
+static constexpr std::string_view VERSION = "@PROJECT_VERSION@";
+
+namespace nooyan::zmq_client
+{
+    std::string_view version() {
+        return VERSION;
+    }
+}

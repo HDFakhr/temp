@@ -1,0 +1,32 @@
+[requires]
+fmt/10.2.1
+cppzmq/4.11.0
+nlohmann_json/3.11.3
+
+[generators]
+CMakeDeps
+CMakeToolchain
+
+[options]
+boost/*:layout=versioned
+boost/*:without_json=True
+boost/*:without_wave=True
+boost/*:without_test=True
+boost/*:without_regex=True
+boost/*:without_random=True
+boost/*:without_iostreams=True
+boost/*:without_stacktrace=True
+boost/*:without_serialization=True
+boost/*:without_python=True
+boost/*:without_log=True
+boost/*:without_graph=True
+boost/*:without_graph_parallel=True
+boost/*:without_fiber=True
+boost/*:without_type_erasure=True
+boost/*:without_coroutine=True
+msgpack-cxx/*:use_boost=False
+
+[imports]
+bin, *.dll -> build/bin @ keep_path=False
+lib, *.so* -> build/bin @ keep_path=False
+lib, *.dylib -> build/bin @ keep_path=False
