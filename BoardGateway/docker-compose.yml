@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  board_gateway:
+    image: faraz/board_gateway:${IMAGE_VERSION}
+    container_name: service.board_gateway
+    stdin_open: true
+    tty: true
+    restart: always
+    ipc: host
+    # network_mode: host
+    ports:
+      - ${SUPERVISOR_INET_PORT}:${SUPERVISOR_INET_PORT}
+    volumes:
+      - ${LOG_DIR}:/root/logs
+    environment:
+      - SUPERVISOR_INET_PORT=${SUPERVISOR_INET_PORT}
+      - SUPERVISOR_LOG_DIR=/root/logs
+      - SUPERVISOR_INET_USERNAME=${SUPERVISOR_INET_USERNAME}
+      - SUPERVISOR_INET_PASSWORD=${SUPERVISOR_INET_PASSWORD}
+      - SRV_SERVICE_NAME=${SRV_SERVICE_NAME}

@@ -1,0 +1,283 @@
+# Configs v@PROJECT_VERSION@
+
+## Introduction
+
+Configs is a C++ library designed to simplify project configuration management. It allows you to define configuration fields directly inside C++ structs, associate each field with a key, and automatically load values from different sources.
+
+The library supports four configuration sources:
+
+- **YAML** – Load configurations from YAML files.
+- **JSON** – Load configurations from JSON files.
+- **ENV** – Load configurations from environment variables or `.env` files.
+- **Args** – Load configurations from command-line arguments.
+
+Configs supports nested objects, vectors, and default values. It uses recursive loading, eliminating the need to implement separate configuration loader classes and methods in your projects.
+
+The library is designed for CMake-based C++ projects and can easily be integrated into an existing codebase as a Git submodule.
+
+## Getting Started
+
+1. Add Configs to your project as a Git submodule.
+2. Configure the required dependencies and build options.
+3. Include the main header file: `#include <configs.hpp>`.
+4. Define your configuration structs and load values from your preferred source.
+
+### Build Steps
+
+#### 1. Add Configs as a Git submodule
+
+```bash
+cd <project-directory>
+git submodule add <repo-url> external/Configs
+git submodule update --init
+cd external/Configs
+git checkout v@PROJECT_VERSION@
+```
+
+#### 2. Configure the project
+
+Configs uses CMake and supports enabling or disabling each configuration source independently.
+
+```cmake
+-DYAML_ENABLE=true
+-DJSON_ENABLE=true
+-DENV_ENABLE=true
+-DARGS_ENABLE=true
+```
+
+Make sure the dependencies required by the enabled sources are available:
+
+| Source | Dependency |
+|---|---|
+| YAML | yaml-cpp |
+| JSON | nlohmann_json |
+| ENV | libenvpp |
+| Args | CLI11 |
+
+#### 3. Include Configs in your project
+
+For example, using `ExternalProject_Add`:
+
+```cmake
+include(ExternalProject)
+
+ExternalProject_Add(Configs
+    SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/Configs
+    BINARY_DIR ${CMAKE_BINARY_DIR}/configs_build
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+)
+
+target_include_directories(${PROJECT_NAME}
+    PRIVATE ${CMAKE_SOURCE_DIR}/external/Configs/include
+)
+```
+
+Enable the required configuration sources through compile definitions:
+
+```cmake
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    YAML_ENABLE=false
+    JSON_ENABLE=false
+    ENV_ENABLE=false
+    ARGS_ENABLE=true
+)
+```
+
+## Usage
+
+### Define configuration structs
+
+Here is an example of a configuration structure containing scalar values, vectors, nested objects, and default values.
+
+my_config.hpp :
+```cpp
+#include <string>
+#include <vector>
+#include <filesystem>
+
+#include <configs.hpp>
+
+
+struct Person
+{
+    configs::ConfigItem <std::string>   name { "name" };
+    configs::ConfigItem <int>           age { "age" };
+
+    DECLARE_MEMBERS(&Person::name, &Person::age)
+};
+
+
+struct MyConfig
+{
+    configs::ConfigItem <std::string>                          string_value{ "string_value" };
+    configs::ConfigItem <int>                                  int_value{ "int_value" };
+    configs::ConfigItem <bool>                                 boolean_value{ "boolean_value" };
+    configs::ConfigItem <std::filesystem::path>                path_value{ "path_value" };
+    configs::ConfigItem <std::vector<std::string>>             vector_string{ "vector_string" };
+    configs::ConfigItem <std::vector<std::filesystem::path>>   vector_path{ "vector_path" };
+    configs::ConfigItem <Person>                               object_person{ "object_person" };
+    configs::ConfigItem <std::vector<Person>>                  vector_person{ "vector_person" };
+    configs::ConfigItem <std::string>                          str_with_default{ "str_def", std::string("None") };
+    configs::ConfigItem <int>                                  int_with_default{ "int_def", 1000 };
+    configs::ConfigItem <bool>                                 bool_with_default{ "bool_def", true };
+    configs::ConfigItem <Person>                               person_with_default{ "person_def", {std::string("Ali"), 20} };
+    configs::ConfigItem <std::vector<int>>                     vector_with_default{ "vector_def", {101,102,103} };
+
+    DECLARE_MEMBERS(&MyConfig::string_value,
+        &MyConfig::int_value,
+        &MyConfig::boolean_value,
+        &MyConfig::path_value,
+        &MyConfig::vector_string,
+        &MyConfig::vector_path,
+        &MyConfig::object_person,
+        &MyConfig::vector_person,
+        &MyConfig::str_with_default,
+        &MyConfig::int_with_default,
+        &MyConfig::bool_with_default,
+        &MyConfig::person_with_default,
+        &MyConfig::vector_with_default)
+};
+```
+
+### Load from YAML
+
+`config.yaml`:
+
+```yaml
+myapp_config:
+    string_value: "hello world!"
+    int_value: 123
+    boolean_value: true
+    path_value: "/usr/bin"
+    vector_string: ["str1", "str2", "str3"]
+    vector_path: ["/usr/path1", "/usr/path2"]
+    object_person:
+        name: "ali"
+        age: 51
+    vector_person:
+        - name: "reza"
+          age: 52
+        - name: "omid"
+          age: 53
+```
+
+`main.cpp`:
+
+```cpp
+#include <iostream>
+#include "my_config.hpp"
+
+int main()
+{
+    configs::ConfigItem<MyConfig> config { "myapp_config" };
+
+    config.load_from_<configs::SourceType::Yaml>("config.yaml");
+
+    auto user = config().vector_person()[1];
+
+    std::cout << "Name: " << user.name()
+              << " - Age: " << user.age() << std::endl;
+
+    // Output: Name: reza - Age: 52
+
+    return 0;
+}
+```
+
+### Load from JSON
+
+`config.json`:
+
+```json
+{
+    "myapp_config": {
+        "string_value": "hello world!",
+        "int_value": 123,
+        "boolean_value": true,
+        "path_value": "/usr/bin",
+        "vector_string": ["str1", "str2", "str3"],
+        "vector_path": ["/usr/path1", "/usr/path2"],
+        "object_person": {
+            "name": "ali",
+            "age": 51
+        },
+        "vector_person": [
+            { "name": "reza", "age": 52 },
+            { "name": "omid", "age": 53 }
+        ]
+    }
+}
+```
+
+Load the configuration:
+
+```cpp
+config.load_from_<configs::SourceType::Json>("config.json");
+```
+
+### Load from ENV
+
+`.env`:
+
+```env
+MYAPP_CONFIG_STRING_VALUE=hello world!
+MYAPP_CONFIG_INT_VALUE=123
+MYAPP_CONFIG_BOOLEAN_VALUE=true
+MYAPP_CONFIG_PATH_VALUE=/usr/bin
+MYAPP_CONFIG_VECTOR_STRING=str1;str2;str3;
+MYAPP_CONFIG_VECTOR_PATH=/usr/path1;/usr/path2;
+MYAPP_CONFIG_OBJECT_PERSON_NAME=ali
+MYAPP_CONFIG_OBJECT_PERSON_AGE=51
+MYAPP_CONFIG_VECTOR_PERSON=reza,52;omid,53;
+```
+
+Load the configuration:
+
+```cpp
+config.load_from_<configs::SourceType::Env>("");
+```
+
+### Load from command-line arguments
+
+Configs also supports loading configuration values directly from command-line arguments using CLI11.
+
+For example:
+
+```cpp
+int main(int argc, char** argv)
+{
+    configs::ConfigItem<MyConfig> config { "myapp_config" };
+
+    config.load_from_args(argc, argv);
+
+    auto user = config().vector_person()[1];
+
+    std::cout << "Name: " << user.name()
+              << " - Age: " << user.age() << std::endl;
+
+    return 0;
+}
+```
+
+Example command-line arguments:
+
+```bash
+./myapp \
+    --myapp-config-string-value "hello world!" \
+    --myapp-config-int-value 123 \
+    --myapp-config-boolean-value true \
+    --myapp-config-path-value /usr/bin
+    --myapp-config-vector-string str1 str2 str3 \
+    --myapp-config-vector-int 11 12 13 \
+    --myapp-config-vector-path /usr/path1 /usr/path2 \
+    --myapp-config-object-person ali 51 \
+    --myapp-config-vector-person reza 52 omid 53
+```
+
+The command-line option names are derived from the configuration keys. Nested objects and vectors are also supported.
+
+## Contribute
+
+Contributions, bug reports, and suggestions are welcome. Feel free to open an issue or submit a pull request to help improve the library.

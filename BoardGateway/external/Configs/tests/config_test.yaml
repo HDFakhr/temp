@@ -1,0 +1,20 @@
+testing params:
+    string value: "hello world!"
+    int value: 123
+    float value: 10.5
+    boolean value: true
+    path value: "/usr/bin"
+    object person:
+        name: "ali"
+        age: 51
+    vector string:
+        - "str1"
+        - "str2"
+        - "str3"
+    vector int: [11, 12]
+    vector path: [ "/usr/path1", "/usr/path2" ]
+    vector person:
+        - name: "reza"
+          age: 52
+        - name: "omid"
+          age: 53

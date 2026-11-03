@@ -1,0 +1,40 @@
+
+
+if (WIN32)
+    list(APPEND CMAKE_PREFIX_PATH "C:/eCAL")
+endif()
+
+find_package(Microsoft.GSL REQUIRED)
+find_package(Protobuf REQUIRED)
+find_package(eCAL REQUIRED)
+find_package(msgpack REQUIRED)
+find_package(libenvpp REQUIRED)
+find_package(cppzmq REQUIRED CONFIG)
+find_package(nlohmann_json REQUIRED CONFIG)
+find_package(CLI11 REQUIRED)
+find_package(fmt REQUIRED)
+
+if (BUILD_WITH_TESTS)
+    find_package(GTest REQUIRED)
+    add_library(conan::gtest ALIAS gtest::gtest)
+endif()
+
+if (BUILD_WITH_BENCHMARKS)
+    find_package(benchmark REQUIRED)
+    add_library(conan::benchmark ALIAS benchmark::benchmark)
+endif()
+
+if (BUILD_WITH_TESTS OR BUILD_WITH_BENCHMARKS)
+    find_package(glog REQUIRED)
+    add_library(conan::glog ALIAS glog::glog)
+endif()
+
+add_library(system::ecal ALIAS eCAL::core)
+add_library(conan::mgsl ALIAS Microsoft.GSL::GSL)
+add_library(conan::msgpack ALIAS msgpack-cxx)
+add_library(conan::libenvpp ALIAS libenvpp::libenvpp)
+add_library(conan::protobuf ALIAS protobuf::protobuf)
+add_library(conan::cppzmq ALIAS cppzmq)
+add_library(conan::nlohmann_json ALIAS nlohmann_json::nlohmann_json)
+add_library(conan::CLI11 ALIAS CLI11::CLI11)
+add_library(conan::fmt ALIAS fmt::fmt)
