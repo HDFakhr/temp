@@ -1,0 +1,10 @@
+#include "zmq_rpc/version.hpp"
+
+static constexpr std::string_view VERSION = "@PROJECT_VERSION@";
+
+namespace zmq_rpc
+{
+    std::string_view version() {
+        return VERSION;
+    }
+}
